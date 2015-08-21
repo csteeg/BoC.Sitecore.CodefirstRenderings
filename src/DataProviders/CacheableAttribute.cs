@@ -12,7 +12,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         static ID _varybydatafield = new ID("{8B6D532B-6128-4486-A044-CA06D90948BA}");
         static ID _varybyloginfield = new ID("{8D9232B0-613F-440B-A2FA-DCDD80FBD33E}");
         static ID _varybydevicefield = new ID("{C98CF969-BA71-42DA-833D-B3FC1368BA27}");
-        static ID _varybyparmfield = new ID("{3AD2506A-DC39-4B1E-959F-9D524ADDBF50}}");
+        static ID _varybyparmfield = new ID("{3AD2506A-DC39-4B1E-959F-9D524ADDBF50}");
         static ID _varybyquerystringfield = new ID("{1084D3D2-0457-456A-ABBC-EB4CC0966072}");
         static ID _varybyuserfield = new ID("{0E54A8DC-72AD-4372-A7C7-BB4773FAD44D}");
 
