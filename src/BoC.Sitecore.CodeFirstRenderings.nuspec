@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>BoC.Sitecore.CodeFirstRenderings</id>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
     <authors>Chris van de Steeg</authors>
     <owners>Chris van de Steeg</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
