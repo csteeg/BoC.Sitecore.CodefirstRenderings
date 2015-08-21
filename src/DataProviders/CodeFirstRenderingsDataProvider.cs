@@ -68,6 +68,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             public static readonly ID ControllerAction = new ID("{DED9E431-3604-4921-A4B3-A6EC7636A5B6}");
             public static readonly ID DataSourceTemplate = new ID("{1A7C85E5-DC0B-490D-9187-BB1DBCB4C72F}");
             public static readonly ID DataSourceLocation = new ID("{B5B27AF1-25EF-405C-87CE-369B3A004016}");
+            public static readonly ID PageEditorButtons = new ID("{A2F5D9DF-8CBA-4A1D-99EB-51ACB94CB057}");
             public static readonly ID ParametersTemplate = new ID("{13F89250-AD6B-4548-882E-118A12C18094}");
         }
 
@@ -305,6 +306,12 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             if (parametersTemplateAttribute != null)
             {
                 list.Add(FieldIds.ParametersTemplate, parametersTemplateAttribute.ParametersTemplate);
+            }
+
+            var experienceEditorButtonsAttribute = action.MethodInfo.GetCustomAttribute<ExperienceEditorButtonsAttribute>();
+            if (experienceEditorButtonsAttribute != null)
+            {
+                list.Add(FieldIds.PageEditorButtons, experienceEditorButtonsAttribute.ExperienceEditorButtons);
             }
         }
 
