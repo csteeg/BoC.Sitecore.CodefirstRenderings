@@ -68,6 +68,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             public static readonly ID ControllerAction = new ID("{DED9E431-3604-4921-A4B3-A6EC7636A5B6}");
             public static readonly ID DataSourceTemplate = new ID("{1A7C85E5-DC0B-490D-9187-BB1DBCB4C72F}");
             public static readonly ID DataSourceLocation = new ID("{B5B27AF1-25EF-405C-87CE-369B3A004016}");
+            public static readonly ID ParametersTemplate = new ID("{13F89250-AD6B-4548-882E-118A12C18094}");
         }
 
         #endregion
@@ -126,9 +127,10 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
                 
                 var item = Database.GetItem(itemDefinition.ID);
                 var existingFields = new ItemChanges(item);
-                foreach (Field field in item.Fields)
+                var generatedFields = GetItemFieldsInternal(itemDefinition, null , context);
+                foreach (var fieldId in generatedFields.GetFieldIDs())
                 {
-                    existingFields.SetFieldValue(field, item[field.ID]);
+                    existingFields.SetFieldValue(item.Fields[fieldId], generatedFields[fieldId]);
                 }
                 sqlProvider.SaveItem(itemDefinition, existingFields, context);
                 return true;
@@ -251,6 +253,11 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             if (GetSqlVersion(item.ID, context, GetSqlProvider(Database)) != null)
                 return null;
 
+            return GetItemFieldsInternal(item, version, context);
+        }
+
+        private FieldList GetItemFieldsInternal(ItemDefinition item, VersionUri version, CallContext context)
+        {
             var list = new FieldList();
             ControllerType controllerType = null;
             if (item.ID == FolderId || ControllerType.GetAllNamespaces().ContainsKey(item.ID.ToGuid()) || ((controllerType = ControllerType.GetControllerType(item.ID)) != null))
@@ -292,6 +299,12 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             if (dataSourceLocationAttribute != null)
             {
                 list.Add(FieldIds.DataSourceLocation, dataSourceLocationAttribute.DataSourceLocation);
+            }
+
+            var parametersTemplateAttribute = action.MethodInfo.GetCustomAttribute<ParametersTemplateAttribute>();
+            if (parametersTemplateAttribute != null)
+            {
+                list.Add(FieldIds.ParametersTemplate, parametersTemplateAttribute.ParametersTemplate);
             }
         }
 

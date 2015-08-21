@@ -74,6 +74,7 @@
     <Compile Include="DataProviders\CodeFirstRenderingsDataProvider.cs" />
     <Compile Include="DataProviders\ControllerAction.cs" />
     <Compile Include="DataProviders\ControllerType.cs" />
+    <Compile Include="DataProviders\ParametersTemplateAttribute.cs" />
     <Compile Include="DataProviders\DataSourceTemplateAttribute.cs" />
     <Compile Include="DataProviders\DataSourceLocationAttribute.cs" />
     <None Include="Content\DataProviders\GlassCodeFirstRenderingsDataProvider.cs.pp" />

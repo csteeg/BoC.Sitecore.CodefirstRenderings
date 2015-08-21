@@ -33,14 +33,26 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
                 return;
 
             var parameters = action.MethodInfo.GetParameters();
-            var templates = (from par in parameters.Where(p => p.Name.Equals("datasource", StringComparison.InvariantCultureIgnoreCase)) 
-                             select glassContext.GetTypeConfiguration<SitecoreTypeConfiguration>(par.ParameterType) 
-                             into glassConfig 
-                             where glassConfig != null 
-                             select glassConfig.TemplateId + "").ToList();
-            if (templates.Any())
-                list.Add(DataSourceTemplateFieldId, String.Join("|",templates));
+            var datasourceParam =
+                (from par in
+                    parameters.Where(p => p.Name.Equals("datasource", StringComparison.InvariantCultureIgnoreCase))
+                    select glassContext.GetTypeConfiguration<SitecoreTypeConfiguration>(par.ParameterType)
+                    into glassConfig
+                    where glassConfig != null
+                    select glassConfig.TemplateId + "").ToList();
+            if (datasourceParam.Any())
+                list.Add(DataSourceTemplateFieldId, String.Join("|", datasourceParam));
+
+            var templateParams =
+                (from par in
+                    parameters.Where(
+                        p => p.Name.Equals("renderingParameters", StringComparison.InvariantCultureIgnoreCase))
+                    select glassContext.GetTypeConfiguration<SitecoreTypeConfiguration>(par.ParameterType)
+                    into glassConfig
+                    where glassConfig != null
+                    select glassConfig.TemplateId + "").ToList();
+            if (templateParams.Any())
+                list.Add(ParametersTemplateFieldId, String.Join("|", templateParams));
         }
     }
 }
-*/
