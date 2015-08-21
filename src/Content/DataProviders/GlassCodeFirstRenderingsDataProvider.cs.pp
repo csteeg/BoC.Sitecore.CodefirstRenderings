@@ -16,6 +16,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
     {
         private string _glassContextName = "Default";
         private static readonly ID DataSourceTemplateFieldId = new ID("{1A7C85E5-DC0B-490D-9187-BB1DBCB4C72F}");
+		private static readonly ID ParametersTemplateFieldId = new ID("{13F89250-AD6B-4548-882E-118A12C18094}");
 
         public string GlassContextName
         {
@@ -56,3 +57,4 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         }
     }
 }
+*/
