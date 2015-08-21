@@ -71,9 +71,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataProviders\ActionAttribute.cs" />
     <Compile Include="DataProviders\CodeFirstRenderingsDataProvider.cs" />
     <Compile Include="DataProviders\ControllerAction.cs" />
     <Compile Include="DataProviders\ControllerType.cs" />
+    <Compile Include="DataProviders\CacheableAttribute.cs" />
     <Compile Include="DataProviders\ParametersTemplateAttribute.cs" />
     <Compile Include="DataProviders\DataSourceTemplateAttribute.cs" />
     <Compile Include="DataProviders\DataSourceLocationAttribute.cs" />

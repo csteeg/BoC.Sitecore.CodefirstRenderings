@@ -66,10 +66,6 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         {
             public static readonly ID ControllerName = new ID("{E64AD073-DFCC-4D20-8C0B-FE5AA6226CD7}");
             public static readonly ID ControllerAction = new ID("{DED9E431-3604-4921-A4B3-A6EC7636A5B6}");
-            public static readonly ID DataSourceTemplate = new ID("{1A7C85E5-DC0B-490D-9187-BB1DBCB4C72F}");
-            public static readonly ID DataSourceLocation = new ID("{B5B27AF1-25EF-405C-87CE-369B3A004016}");
-            public static readonly ID PageEditorButtons = new ID("{A2F5D9DF-8CBA-4A1D-99EB-51ACB94CB057}");
-            public static readonly ID ParametersTemplate = new ID("{13F89250-AD6B-4548-882E-118A12C18094}");
         }
 
         #endregion
@@ -92,53 +88,8 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 
         public override bool SaveItem(ItemDefinition itemDefinition, ItemChanges changes, CallContext context)
         {
-            var sqlProvider = GetSqlProvider(Database);
-            if (!EnsureSqlVersion(itemDefinition, sqlProvider, context))
-                return false;
-
-            sqlProvider.SaveItem(itemDefinition, changes, context);
-            return true;
-        }
-
-        public override bool CreateItem(ID itemID, string itemName, ID templateID, ItemDefinition parent, CallContext context)
-        {
-            var sqlProvider = GetSqlProvider(Database);
-            return EnsureSqlVersion(parent, sqlProvider, context) &&
-                    sqlProvider.CreateItem(itemID, itemName, templateID, parent, context);
-        }
-
-        private bool EnsureSqlVersion(ItemDefinition itemDefinition, DataProvider sqlProvider, CallContext context)
-        {
-            var sqlVersion = GetSqlVersion(itemDefinition.ID, context, sqlProvider);
-            if (sqlVersion != null)
-            {
-                return true;
-            }
-            if (itemDefinition.ID == FolderId ||
-                ControllerType.GetAllNamespaces().ContainsKey(itemDefinition.ID.ToGuid())
-                || ControllerType.GetAllControllers().ContainsKey(itemDefinition.ID.ToGuid())
-                || ControllerAction.GetControllerAction(itemDefinition.ID) != null)
-            {
-                var parentId = GetParentID(itemDefinition, context) ?? sqlProvider.GetParentID(itemDefinition, context);
-                var itemdef = GetItemDefinition(parentId, context) ?? sqlProvider.GetItemDefinition(parentId, context);
-                if (!sqlProvider.CreateItem(itemDefinition.ID, itemDefinition.Name, itemDefinition.TemplateID, itemdef, context))
-                {
-                    return false;
-                }
-                
-                var item = Database.GetItem(itemDefinition.ID);
-                var existingFields = new ItemChanges(item);
-                var generatedFields = GetItemFieldsInternal(itemDefinition, null , context);
-                foreach (var fieldId in generatedFields.GetFieldIDs())
-                {
-                    existingFields.SetFieldValue(item.Fields[fieldId], generatedFields[fieldId]);
-                }
-                sqlProvider.SaveItem(itemDefinition, existingFields, context);
-                return true;
-            }
             return false;
         }
-
         private ItemDefinition GetSqlVersion(ID itemId, CallContext context, DataProvider sqlProvider)
         {
             if (sqlProvider == null)
@@ -245,6 +196,16 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             return base.GetParentID(itemDefinition, context);
         }
 
+        private void AddStandardFields(FieldList list)
+        {
+            list.Add(global::Sitecore.FieldIDs.Created, "20140716T211810Z");
+            list.Add(global::Sitecore.FieldIDs.CreatedBy, "sitecore\\admin");
+            list.Add(global::Sitecore.FieldIDs.Revision, Guid.NewGuid().ToString("D"));
+            list.Add(global::Sitecore.FieldIDs.Updated, "20140716T211810Z");
+            list.Add(global::Sitecore.FieldIDs.UpdatedBy, "sitecore\\admin");
+        }
+
+
         public override FieldList GetItemFields(ItemDefinition item, VersionUri version, CallContext context)
         {
             Assert.ArgumentNotNull(item, "item");
@@ -268,6 +229,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
                 {
                     list.Add(FieldIDs.DisplayName, controllerType.Description);
                 }
+                AddStandardFields(list);
             }
             else
             {
@@ -275,12 +237,10 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
                 if (action != null && HttpContext.Current != null)
                 {
                     AddActionFields(list, action);
+                    AddStandardFields(list);
                 }
             }
-            if (list.Count == 0)
-                return base.GetItemFields(item, version, context);
-
-            return list;
+            return list.Count == 0 ? base.GetItemFields(item, version, context) : list;
         }
 
         protected virtual void AddActionFields(FieldList list, ControllerAction action)
@@ -290,41 +250,18 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             list.Add(FieldIds.ControllerName, action.ControllerType.ControllerName);
             list.Add(FieldIds.ControllerAction, action.ActionName);
 
-            var dataSourceTemplateAttribute = action.MethodInfo.GetCustomAttribute<DataSourceTemplateAttribute>();
-            if (dataSourceTemplateAttribute != null)
-            {
-                list.Add(FieldIds.DataSourceTemplate, dataSourceTemplateAttribute.DataSourceTemplate);
-            }
+            var customAttributes = action.MethodInfo.GetCustomAttributes(true);
 
-            var dataSourceLocationAttribute = action.MethodInfo.GetCustomAttribute<DataSourceLocationAttribute>();
-            if (dataSourceLocationAttribute != null)
+            foreach (var item in customAttributes.OfType<ActionAttribute>()
+                                    .SelectMany(customAttribute => customAttribute.GetFields()))
             {
-                list.Add(FieldIds.DataSourceLocation, dataSourceLocationAttribute.DataSourceLocation);
-            }
-
-            var parametersTemplateAttribute = action.MethodInfo.GetCustomAttribute<ParametersTemplateAttribute>();
-            if (parametersTemplateAttribute != null)
-            {
-                list.Add(FieldIds.ParametersTemplate, parametersTemplateAttribute.ParametersTemplate);
-            }
-
-            var experienceEditorButtonsAttribute = action.MethodInfo.GetCustomAttribute<ExperienceEditorButtonsAttribute>();
-            if (experienceEditorButtonsAttribute != null)
-            {
-                list.Add(FieldIds.PageEditorButtons, experienceEditorButtonsAttribute.ExperienceEditorButtons);
+                list.Add(item.Key, item.Value);
             }
         }
 
         public override bool MoveItem(ItemDefinition itemDefinition, ItemDefinition destination, CallContext context)
         {
-            var sqlProvider = GetSqlProvider(Database);
-            if (!EnsureSqlVersion(itemDefinition, sqlProvider, context)) 
-                return false;
-            if (!EnsureSqlVersion(destination, sqlProvider, context))
-                return false;
-            
-            sqlProvider.MoveItem(itemDefinition, destination, context);
-            return true;
+            return false;
         }
 
 
