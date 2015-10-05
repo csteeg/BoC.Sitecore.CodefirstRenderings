@@ -72,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataProviders\ActionAttribute.cs" />
+    <Compile Include="DataProviders\FieldValueAttribute.cs" />
     <Compile Include="DataProviders\CodeFirstRenderingsDataProvider.cs" />
     <Compile Include="DataProviders\ControllerAction.cs" />
     <Compile Include="DataProviders\ControllerType.cs" />

@@ -249,7 +249,6 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             list.Add(FieldIDs.DisplayName, action.Description);
             list.Add(FieldIds.ControllerName, action.ControllerType.ControllerName);
             list.Add(FieldIds.ControllerAction, action.ActionName);
-
             var customAttributes = action.MethodInfo.GetCustomAttributes(true);
 
             foreach (var item in customAttributes.OfType<ActionAttribute>()
