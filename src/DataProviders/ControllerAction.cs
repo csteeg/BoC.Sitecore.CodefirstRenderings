@@ -10,6 +10,17 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 {
     public class ControllerAction : IComparable<ControllerAction>
     {
+        public ControllerAction(){}
+
+        public ControllerAction(string id)
+        {
+            Guid templateId;
+            if (!string.IsNullOrEmpty(id) && Guid.TryParse(id, out templateId))
+            {
+                _id = templateId;
+            }
+        }
+
         public ControllerType ControllerType { get; private set; }
         public string ActionName { get; private set; }
         public Guid ParentId { get { return ControllerType.Id; } }
