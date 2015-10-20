@@ -10,17 +10,6 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 {
     public class ControllerAction : IComparable<ControllerAction>
     {
-        public ControllerAction(){}
-
-        public ControllerAction(string id)
-        {
-            Guid templateId;
-            if (!string.IsNullOrEmpty(id) && Guid.TryParse(id, out templateId))
-            {
-                _id = templateId;
-            }
-        }
-
         public ControllerType ControllerType { get; private set; }
         public string ActionName { get; private set; }
         public Guid ParentId { get { return ControllerType.Id; } }
@@ -30,6 +19,14 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         {
             get
             {
+                if (_id != null)
+                    return _id.Value;
+                var attributes = MethodInfo.GetCustomAttributes(typeof(ControllerActionAttribute), true);
+                if (attributes != null && attributes.Length > 0)
+                {
+                   return (_id = ((ControllerActionAttribute)attributes[0]).Id).Value;
+                }
+
                 return (Guid) (_id ?? (_id = ControllerType.ToUniqueId(ActionName + ControllerType.Type.AssemblyQualifiedName)));
             }
         }
@@ -41,7 +38,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             {
                 if (_description == null)
                 {
-                    var attributes = MethodInfo.GetCustomAttributes(typeof(DescriptionAttribute), false);
+                    var attributes = MethodInfo.GetCustomAttributes(typeof(DescriptionAttribute), true);
                     if (attributes != null && attributes.Length > 0)
                     {
                         _description = ((DescriptionAttribute)attributes[0]).Description;
@@ -86,6 +83,14 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 
         private static readonly object _allActionsLock = new object();
         internal static IDictionary<Guid, ISet<ControllerAction>> _allActions = new Dictionary<Guid, ISet<ControllerAction>>();
+
+        private ControllerAction(string name, ControllerType controllerType, MethodInfo methodInfo)
+        {
+            ActionName = name;
+            ControllerType = controllerType;
+            MethodInfo = methodInfo;
+        }
+
         private static IDictionary<Guid, ISet<ControllerAction>> GetAllActions()
         {
             if (_allActions.Any()) return _allActions;
@@ -111,22 +116,12 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
                         var name = aliasedMethod.GetCustomAttributes(typeof(ActionNameAttribute), true).OfType<ActionNameAttribute>().FirstOrDefault();
                         if (name != null)
                         {
-                            _allActions[controllerId].Add(new ControllerAction
-                            {
-                                ActionName = name.Name,
-                                ControllerType = controllerType,
-                                MethodInfo = aliasedMethod
-                            });
+                            _allActions[controllerId].Add(new ControllerAction(name.Name, controllerType, aliasedMethod));
                         }
                     }
                     foreach (var method in nonAliasedMethods)
                     {
-                        _allActions[controllerId].Add(new ControllerAction
-                        {
-                            ActionName = method.Name,
-                            ControllerType = controllerType,
-                            MethodInfo = method
-                        });
+                        _allActions[controllerId].Add(new ControllerAction(method.Name,controllerType,method));
                     }
                 }
             }
@@ -135,8 +130,9 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 
         static bool IsValidActionMethod(MethodInfo methodInfo)
         {
-            return !(methodInfo.IsSpecialName ||
-                     methodInfo.GetBaseDefinition().DeclaringType.IsAssignableFrom(typeof(Controller)));
+            
+            return !methodInfo.IsDefined(typeof(HttpPostAttribute)) && !methodInfo.IsSpecialName &&
+                     !methodInfo.GetBaseDefinition().DeclaringType.IsAssignableFrom(typeof(Controller));
         }
         #endregion
 

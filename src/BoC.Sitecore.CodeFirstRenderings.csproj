@@ -71,6 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataProviders\ControllerActionAttribute.cs" />
     <Compile Include="DataProviders\ActionAttribute.cs" />
     <Compile Include="DataProviders\FieldValueAttribute.cs" />
     <Compile Include="DataProviders\CodeFirstRenderingsDataProvider.cs" />
