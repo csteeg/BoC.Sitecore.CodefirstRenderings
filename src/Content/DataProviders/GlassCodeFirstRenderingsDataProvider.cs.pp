@@ -37,7 +37,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             var datasourceParam =
                 (from par in
                     parameters.Where(p => p.Name.Equals("datasource", StringComparison.InvariantCultureIgnoreCase))
-                    select glassContext.GetTypeConfiguration<SitecoreTypeConfiguration>(par.ParameterType)
+                    select glassContext.GetTypeConfigurationFromType<SitecoreTypeConfiguration>(par.ParameterType)
                     into glassConfig
                     where glassConfig != null
                     select glassConfig.TemplateId + "").ToList();
@@ -48,7 +48,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
                 (from par in
                     parameters.Where(
                         p => p.Name.Equals("renderingParameters", StringComparison.InvariantCultureIgnoreCase))
-                    select glassContext.GetTypeConfiguration<SitecoreTypeConfiguration>(par.ParameterType)
+                    select glassContext.GetTypeConfigurationFromType<SitecoreTypeConfiguration>(par.ParameterType)
                     into glassConfig
                     where glassConfig != null
                     select glassConfig.TemplateId + "").ToList();
