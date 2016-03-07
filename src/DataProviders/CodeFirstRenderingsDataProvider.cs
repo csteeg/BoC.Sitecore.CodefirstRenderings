@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Reflection;
 using System.Web;
 using Sitecore;
 using Sitecore.Collections;
 using Sitecore.Data;
 using Sitecore.Data.DataProviders;
-using Sitecore.Data.DataProviders.Sql;
-using Sitecore.Data.Fields;
 using Sitecore.Data.Items;
 using Sitecore.Data.Managers;
 using Sitecore.Diagnostics;
@@ -90,31 +87,13 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         {
             return false;
         }
-        private ItemDefinition GetSqlVersion(ID itemId, CallContext context, DataProvider sqlProvider)
-        {
-            if (sqlProvider == null)
-                return null;
-            var sqlVersion = sqlProvider.GetItemDefinition(itemId, context);
-            return sqlVersion;
-        }
-
-        /// <summary>
-        /// Gets the base SQL provider that will store physical items
-        /// </summary>
-        /// <param name="db"></param>
-        /// <returns></returns>
-        private DataProvider GetSqlProvider(Database db)
-        {
-            var providers = db.GetDataProviders();
-            return providers.FirstOrDefault(x => x is SqlDataProvider);
-        }
 
         public override VersionUriList GetItemVersions(ItemDefinition itemDefinition, CallContext context)
         {
             Assert.ArgumentNotNull(itemDefinition, "itemDefinition");
             Assert.ArgumentNotNull(context, "context");
 
-            if (GetSqlVersion(itemDefinition.ID, context, GetSqlProvider(Database)) != null)
+            if (context.CurrentResult != null)
                 return null;
             if (itemDefinition.ID == FolderId ||
                 ControllerType.GetAllNamespaces().ContainsKey(itemDefinition.ID.ToGuid())
@@ -139,7 +118,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         {
             Assert.ArgumentNotNull(itemId, "itemId");
             Assert.ArgumentNotNull(context, "context");
-            if (GetSqlVersion(itemId, context, GetSqlProvider(Database)) != null)
+            if (context.CurrentResult != null)
                 return null;
             
             if (itemId == FolderId)
@@ -170,7 +149,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 
         public override ID GetParentID(ItemDefinition itemDefinition, CallContext context)
         {
-            if (GetSqlVersion(itemDefinition.ID, context, GetSqlProvider(Database)) != null)
+            if (context.CurrentResult != null)
                 return null;
 
             if (itemDefinition.ID == FolderId)
@@ -212,7 +191,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             Assert.ArgumentNotNull(version, "version");
             Assert.ArgumentNotNull(context, "context");
 
-            if (GetSqlVersion(item.ID, context, GetSqlProvider(Database)) != null)
+            if (context.CurrentResult != null)
                 return null;
 
             return GetItemFieldsInternal(item, version, context);
@@ -234,7 +213,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             else
             {
                 var action = ControllerAction.GetControllerAction(item.ID);
-                if (action != null && HttpContext.Current != null)
+                if (action != null)
                 {
                     AddActionFields(list, action);
                     AddStandardFields(list);
@@ -271,20 +250,19 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 
             if (itemDefinition.ID == ParentId)
             {
-                if (GetSqlVersion(FolderId, context, GetSqlProvider(Database)) == null)
-                    list.Add(FolderId);
+                list.Add(FolderId);
             }
             else if (itemDefinition.ID == FolderId)
             {
-                AddAllNamespaces(list, context);
+                AddAllNamespaces(list);
             }
             else if (ControllerType.GetAllNamespaces().ContainsKey(itemDefinition.ID.ToGuid()))
             {
-                AddControllers(list, itemDefinition.ID.ToGuid(), context);
+                AddControllers(list, itemDefinition.ID.ToGuid());
             }
             else if ((controllerType = ControllerType.GetControllerType(itemDefinition.ID)) != null)
             {
-                AddAllActions(list, controllerType, context);
+                AddAllActions(list, controllerType);
             }
             else
             {
@@ -296,40 +274,26 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             return list;
         }
 
-        void AddAllActions(IDList list, ControllerType controllerType, CallContext context)
+        void AddAllActions(IDList list, ControllerType controllerType)
         {
-            var sqlProvider = GetSqlProvider(Database);
-            foreach (var action in ControllerAction.GetAllActions(controllerType.Id).Where(a =>
-            {
-                return GetSqlVersion(new ID(a.Id), context, sqlProvider) == null;
-            }))
+            foreach (var action in ControllerAction.GetAllActions(controllerType.Id))
             {
                 if (!list.Contains(new ID(action.Id)))
                     list.Add(new ID(action.Id));
             }
         }
 
-        void AddControllers(IDList list, Guid parentId, CallContext context)
+        void AddControllers(IDList list, Guid parentId)
         {
-            var sqlProvider = GetSqlProvider(Database);
-            foreach (var controller in ControllerType.GetAllControllers().Values.Where(c =>
-            {
-                if (c.ParentId != parentId)
-                    return false;
-                return GetSqlVersion(new ID(c.Id), context, sqlProvider) == null;
-            }))
+            foreach (var controller in ControllerType.GetAllControllers().Values.Where(c => c.ParentId != parentId))
             {
                 list.Add(new ID(controller.Id));
             }
         }
 
-        void AddAllNamespaces(IDList list, CallContext context)
+        void AddAllNamespaces(IDList list)
         {
-            var sqlProvider = GetSqlProvider(Database);
-            foreach (var nspace in ControllerType.GetAllNamespaces().Where(s =>
-            {
-                return GetSqlVersion(new ID(s.Key), context, sqlProvider) == null;
-            }))
+            foreach (var nspace in ControllerType.GetAllNamespaces())
             {
                 list.Add(new ID(nspace.Key));
             }
