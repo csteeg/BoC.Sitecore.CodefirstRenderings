@@ -129,19 +129,19 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             var nspace = allNamespaces.ContainsKey(itemId.ToGuid()) ? allNamespaces[itemId.ToGuid()] : null;
             if (!string.IsNullOrEmpty(nspace))
             {
-                return new ItemDefinition(itemId, nspace, FolderTemplateId, this.MasterId);
+                return new ItemDefinition(itemId, ItemUtil.ProposeValidItemName(nspace.Replace(".", "_")), FolderTemplateId, this.MasterId);
             }
 
             var type = ControllerType.GetControllerType(itemId);
             if (type != null)
             {
-                return new ItemDefinition(itemId, type.ControllerName, FolderTemplateId, this.MasterId);
+                return new ItemDefinition(itemId, ItemUtil.ProposeValidItemName(type.ControllerName), FolderTemplateId, this.MasterId);
             }
 
             var action = ControllerAction.GetControllerAction(itemId);
             if (action != null)
             {
-                return new ItemDefinition(itemId, action.ActionName, ControllerRenderingId, this.MasterId);
+                return new ItemDefinition(itemId, ItemUtil.ProposeValidItemName(action.ActionName), ControllerRenderingId, this.MasterId);
             }
 
             return base.GetItemDefinition(itemId, context);
@@ -246,11 +246,12 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         public override IDList GetChildIDs(ItemDefinition itemDefinition, CallContext context)
         {
             ControllerType controllerType;
-            var list = new IDList();
+            var list = context.CurrentResult as IDList ?? new IDList();
 
             if (itemDefinition.ID == ParentId)
             {
-                list.Add(FolderId);
+                if (!list.Contains(FolderId))
+                    list.Add(FolderId);
             }
             else if (itemDefinition.ID == FolderId)
             {
@@ -285,7 +286,7 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 
         void AddControllers(IDList list, Guid parentId)
         {
-            foreach (var controller in ControllerType.GetAllControllers().Values.Where(c => c.ParentId != parentId))
+            foreach (var controller in ControllerType.GetAllControllers().Values.Where(c => c.ParentId == parentId && !list.Contains(new ID(c.Id))))
             {
                 list.Add(new ID(controller.Id));
             }
@@ -295,7 +296,8 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         {
             foreach (var nspace in ControllerType.GetAllNamespaces())
             {
-                list.Add(new ID(nspace.Key));
+                if (!list.Contains(new ID(nspace.Key)))
+                    list.Add(new ID(nspace.Key));
             }
         }
     }
