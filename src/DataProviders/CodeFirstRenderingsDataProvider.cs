@@ -246,24 +246,25 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
         public override IDList GetChildIDs(ItemDefinition itemDefinition, CallContext context)
         {
             ControllerType controllerType;
-            var list = context.CurrentResult as IDList ?? new IDList();
+            var list = new IDList();
+            var existingList = context.CurrentResult as IDList ?? new IDList();
 
             if (itemDefinition.ID == ParentId)
             {
-                if (!list.Contains(FolderId))
+                if (!existingList.Contains(FolderId))
                     list.Add(FolderId);
             }
             else if (itemDefinition.ID == FolderId)
             {
-                AddAllNamespaces(list);
+                AddAllNamespaces(list, existingList);
             }
             else if (ControllerType.GetAllNamespaces().ContainsKey(itemDefinition.ID.ToGuid()))
             {
-                AddControllers(list, itemDefinition.ID.ToGuid());
+                AddControllers(list, itemDefinition.ID.ToGuid(), existingList);
             }
             else if ((controllerType = ControllerType.GetControllerType(itemDefinition.ID)) != null)
             {
-                AddAllActions(list, controllerType);
+                AddAllActions(list, controllerType, existingList);
             }
             else
             {
@@ -275,28 +276,28 @@ namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
             return list;
         }
 
-        void AddAllActions(IDList list, ControllerType controllerType)
+        void AddAllActions(IDList list, ControllerType controllerType, IDList existingList)
         {
             foreach (var action in ControllerAction.GetAllActions(controllerType.Id))
             {
-                if (!list.Contains(new ID(action.Id)))
+                if (!existingList.Contains(new ID(action.Id)))
                     list.Add(new ID(action.Id));
             }
         }
 
-        void AddControllers(IDList list, Guid parentId)
+        void AddControllers(IDList list, Guid parentId, IDList existingList)
         {
-            foreach (var controller in ControllerType.GetAllControllers().Values.Where(c => c.ParentId == parentId && !list.Contains(new ID(c.Id))))
+            foreach (var controller in ControllerType.GetAllControllers().Values.Where(c => c.ParentId == parentId && !existingList.Contains(new ID(c.Id))))
             {
                 list.Add(new ID(controller.Id));
             }
         }
 
-        void AddAllNamespaces(IDList list)
+        void AddAllNamespaces(IDList list, IDList existingList)
         {
             foreach (var nspace in ControllerType.GetAllNamespaces())
             {
-                if (!list.Contains(new ID(nspace.Key)))
+                if (!existingList.Contains(new ID(nspace.Key)))
                     list.Add(new ID(nspace.Key));
             }
         }
