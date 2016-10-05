@@ -3,3 +3,6 @@ obj/
 packages/
 
 src/bin/
+
+_ReSharper.*
+.vs/

@@ -6,7 +6,8 @@ using Sitecore.Data;
 
 namespace BoC.Sitecore.CodeFirstRenderings.DataProviders
 {
-    public class FieldValueAttribute : ActionAttribute
+	[AttributeUsage(AttributeTargets.Method, Inherited = true, AllowMultiple = true)]
+	public class FieldValueAttribute : ActionAttribute
     {
         private readonly ID _fieldId;
         private readonly string _value;
